@@ -2,6 +2,7 @@ const db = require("../models");
 const bcrypt = require("bcrypt");
 // require("dotenv").config()
 const jwt = require("jsonwebtoken");
+const { createEmailSender } = require("./emailSender")
 const User = db.users;
 // const Op = db.Sequelize.Op;
 
@@ -24,6 +25,7 @@ exports.createUser = async (req, res) => {
     User.create(user)
         .then(data => {
             res.status(201).json({ data: data, msg: "User Registered successfully" })
+            createEmailSender();
         })
         .catch(err => {
             res.status(500).send({
