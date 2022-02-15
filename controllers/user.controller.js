@@ -2,8 +2,23 @@ const db = require("../models");
 const bcrypt = require("bcrypt");
 // require("dotenv").config()
 const jwt = require("jsonwebtoken");
+var nodemailer = require("nodemailer");
 const User = db.users;
-// const Op = db.Sequelize.Op;
+
+var transporter = nodemailer.createTransport({
+    service:'gmail',
+    auth:{
+        user:'mahesh.thoughtwin@gmail.com',
+        pass:'mahesh12345'
+    }
+});
+
+var mailOptions = {
+    from:'mahesh.thoughtwin@gmail.com',
+    to:'mahesh.thoughtwin@gmail.com',
+    subject:'Nodemailer Email Test Module',
+    text:'You have been Registered Successfully!please login now!'        
+};
 
 
 exports.createUser = async (req, res) => {
@@ -24,6 +39,9 @@ exports.createUser = async (req, res) => {
     User.create(user)
         .then(data => {
             res.status(201).json({ data: data, msg: "User Registered successfully" })
+            transporter.sendMail(mailOptions,(error,info)=>{
+                console.log('You have been Registered Successfully' + info.response);
+            })
         })
         .catch(err => {
             res.status(500).send({
