@@ -22,10 +22,12 @@ exports.createUser = async (req, res) => {
         gender: gender,
         password: encryptedPassword
     }
+    const success = "User Registered successfully!";
+    const subject = "Registered User App";
     User.create(user)
         .then(data => {
-            res.status(201).json({ data: data, msg: "User Registered successfully" })
-            createEmailSender();
+            res.status(201).json({ data: data,msg:success})
+            createEmailSender(email,subject,success);
         })
         .catch(err => {
             res.status(500).send({
@@ -65,9 +67,12 @@ exports.changePasswordUser = async (req, res) => {
         var userId = decoded.id
         const salt = await bcrypt.genSalt(8);
         const password = await bcrypt.hash(req.body.password, salt);
+        const success = "Changed password successfully!";
+        const subject = "Change password user App";
         const id = await User.findOne({ where: { id: userId } }).then((user) => {
             user.update({ password: password }).then((user) => {
                 res.status(200).json({ data: user, msg: "Changed password successfully" })
+                createEmailSender(decoded.email,subject,success)
             })
         });
     } catch (err) {
@@ -92,6 +97,8 @@ exports.updateProfileUsers = async (req, res) => {
         var decoded = jwt.verify(onlyToken, "mynameismaheshnodejsdevloper");
         var userId = decoded.id
         const encryptedPassword = await bcrypt.hash(password, 8);
+        const success = "Profile Updated successfully!";
+        const subject = "Update user profile App";
         let user = await User.findOne({ where: { id: userId } }).then((user) => {
             user.update({
                 first_name: first_name,
@@ -101,6 +108,7 @@ exports.updateProfileUsers = async (req, res) => {
                 password: encryptedPassword
             }).then((user) => {
                 res.status(200).json({ data: user, msg: "Profile Updated successfully" })
+                createEmailSender(decoded.email,subject,success)
             })
         })
     } catch (err) {
