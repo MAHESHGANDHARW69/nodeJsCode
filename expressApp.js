@@ -3,12 +3,9 @@ const cors = require("cors");
 const db = require("./models");
 const userRouter = require("./routes/user.routes");
 const app = express();
+require('dotenv').config();
 
-var corsOptions = {
-    origin: "http://localhost:4005"
-}
 
-app.use(cors(corsOptions))
 
 
 app.use(express.urlencoded({ extended: false }));
@@ -17,7 +14,7 @@ db.sequelize.sync();
 
 app.use('/api/users',userRouter);
 
-const PORT = process.env.PORT || 8000
+const PORT = process.env.PORTADD || 5000
 
 app.listen(PORT, (err) => {
     console.log(`Server is running on port ${PORT}`);
