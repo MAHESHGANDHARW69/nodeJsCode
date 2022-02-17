@@ -4,36 +4,45 @@ const jwt = require("jsonwebtoken");
 require('dotenv').config();
 const { createEmailSender } = require("./emailSender")
 const User = db.users;
-
+let refreshTokens = [];
 
 exports.createUser = async (req, res) => {
-    console.log('================>', req.body)
-    const { first_name, last_name, email, gender, password } = req.body;
-    const oldUser = await User.findOne({ where: { email } })
-    if (oldUser) {
-        return res.status(409).json({ msg: "User Already Exist. Please Login" });
+    try {
+        // console.log('================>', req.body)
+        const t = await db.sequelize.transaction();
+        const { first_name, last_name, email, gender, password } = req.body;
+        const oldUser = await User.findOne({ where: { email } })
+        if (oldUser) {
+            return res.status(409).json({ msg: "User Already Exist. Please Login" });
+        }
+        const encryptedPassword = await bcrypt.hash(password, 8);
+        const user = {
+            first_name: first_name,
+            last_name: last_name,
+            email: email,
+            gender: gender,
+            password: encryptedPassword
+        }
+        const success = "User Registered successfully!";
+        const subject = "Registered User App";
+        User.create(user,{transaction:t})
+            .then(data => {
+                res.status(201).json({ data: data, msg: success })
+                createEmailSender(email, subject, success);
+                t.commit()
+                console.log("commit");
+            })
+            .catch(err => {
+                res.status(500).send({
+                    message:
+                        err.message || "Internal Server Error,"
+                });
+                t.rollback();
+                console.log("rollback")
+            })
+    } catch (err) {
+        res.send(err)
     }
-    const encryptedPassword = await bcrypt.hash(password, 8);
-    const user = {
-        first_name: first_name,
-        last_name: last_name,
-        email: email,
-        gender: gender,
-        password: encryptedPassword
-    }
-    const success = "User Registered successfully!";
-    const subject = "Registered User App";
-    User.create(user)
-        .then(data => {
-            res.status(201).json({ data: data, msg: success })
-            createEmailSender(email, subject, success);
-        })
-        .catch(err => {
-            res.status(500).send({
-                message:
-                    err.message || "Internal Server Error,"
-            });
-        })
 }
 
 exports.loginUser = async (req, res) => {
@@ -41,14 +50,15 @@ exports.loginUser = async (req, res) => {
         const { email, password } = req.body;
         const user = await User.findOne({ where: { email } });
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('////////////////', isMatch)
         let data = {
             id: user.id,
             email: user.email
         }
+        // const access_token = await jwt.sign(data, process.env.JWT_SECRET, { expiresIn: "20s" });
+        // const refresh_token = await jwt.sign({ data, refresh: true }, process.env.JWT_SECRET, { expiresIn: "7 days" });
         const access_token = await jwt.sign(data, process.env.JWT_SECRET, { expiresIn: "8h" });
-        const refresh_token = await jwt.sign({ data, refresh: true }, process.env.JWT_SECRET, { expiresIn: "30 days" });
-        // console.log(token)
+        const refresh_token = await jwt.sign({ data, refresh: true }, process.env.JWT_REFRESH, { expiresIn: "7 days" });
+        refreshTokens.push(refresh_token);
         if (isMatch) {
             res.status(200).json({ email: user.email, password: user.password, access_token, refresh_token, msg: "User LoggedIn!" });
         } else {
@@ -64,7 +74,9 @@ exports.changePasswordUser = async (req, res) => {
         let token = req.headers.authorization;
         let onlyToken = token.split(' ')[1]
         var decoded = jwt.verify(onlyToken, process.env.JWT_SECRET);
+        console.log(decoded)
         var userId = decoded.id
+        console.log(userId)
         const salt = await bcrypt.genSalt(8);
         const password = await bcrypt.hash(req.body.password, salt);
         const success = "Changed password successfully!";
@@ -76,16 +88,19 @@ exports.changePasswordUser = async (req, res) => {
             })
         });
     } catch (err) {
-        res.status(404).send("Invalid token")
+        res.status(404).send("Unauthorized access")
     }
 }
 
 exports.getUserInfo = async (req, res) => {
     try {
-        let user = await User.findAll();
+        const t = await db.sequelize.transaction();
+        let user = await User.findAll({transaction:t});
         res.status(200).json({ data: user });
+        t.commit()
     } catch (err) {
         res.status(400).send(err);
+        t.rollback();
     }
 }
 
@@ -112,7 +127,7 @@ exports.updateProfileUsers = async (req, res) => {
             })
         })
     } catch (err) {
-        res.status(404).send("Invalid token")
+        res.status(404).send("Unauthorized access.")
     }
 }
 
@@ -132,6 +147,27 @@ exports.deleteUserDetails = async (req, res) => {
             }
         })
     } catch (err) {
-        res.status(404).send('Invalid token');
+        res.status(404).send('Unauthorized access.');
+    }
+}
+
+exports.renewAccessToken = async (req, res) => {
+    try {
+        let refreshToken = req.headers.authorization;
+        // console.log(refreshToken)
+        // res.send(refreshToken)
+        if (!refreshToken || !refreshTokens.includes(refreshToken)) {
+            return res.status(403).json({ msg: 'User not authorized' })
+        }
+        jwt.verify(refreshToken, process.env.JWT_REFRESH, (err, user) => {
+            if (!err) {
+                const accessToken = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "20s" });
+                return res.status(201).json({ accessToken })
+            } else {
+                return res.status(403).json({ msg: 'User not authorized1' })
+            }
+        })
+    } catch (err) {
+
     }
 }

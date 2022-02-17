@@ -8,4 +8,5 @@ userRouter.post("/changePassword",auth,users.changePasswordUser);
 userRouter.get("/usersInfo",users.getUserInfo);
 userRouter.put("/updateProfile",auth,users.updateProfileUsers);
 userRouter.delete("/deleteUser",auth,users.deleteUserDetails);
+userRouter.post("/renewAccessToken",users.renewAccessToken)
 module.exports = userRouter;
