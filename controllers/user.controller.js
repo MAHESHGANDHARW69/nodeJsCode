@@ -9,10 +9,11 @@ let refreshTokens = [];
 exports.createUser = async (req, res) => {
     try {
         // console.log('================>', req.body)
-        const t = await db.sequelize.transaction();
+        const t = await db.sequelize.transaction();//Transaction handle
         const { first_name, last_name, email, gender, password } = req.body;
         const oldUser = await User.findOne({ where: { email } })
         if (oldUser) {
+            t.rollback()
             return res.status(409).json({ msg: "User Already Exist. Please Login" });
         }
         const encryptedPassword = await bcrypt.hash(password, 8);
@@ -25,7 +26,7 @@ exports.createUser = async (req, res) => {
         }
         const success = "User Registered successfully!";
         const subject = "Registered User App";
-        User.create(user,{transaction:t})
+        User.create(user, { transaction: t })
             .then(data => {
                 res.status(201).json({ data: data, msg: success })
                 createEmailSender(email, subject, success);
@@ -47,8 +48,9 @@ exports.createUser = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
     try {
+        const t = await db.sequelize.transaction();
         const { email, password } = req.body;
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ where: { email } }, { transaction: t });
         const isMatch = await bcrypt.compare(password, user.password);
         let data = {
             id: user.id,
@@ -60,9 +62,13 @@ exports.loginUser = async (req, res) => {
         const refresh_token = await jwt.sign({ data, refresh: true }, process.env.JWT_REFRESH, { expiresIn: "7 days" });
         refreshTokens.push(refresh_token);
         if (isMatch) {
+            t.commit();
             res.status(200).json({ email: user.email, password: user.password, access_token, refresh_token, msg: "User LoggedIn!" });
+            console.log("commited Logged")
         } else {
+            t.rollback();
             res.status(404).json({ error: 'Invalid password Details' });
+            console.log("error is rolling")
         }
     } catch (err) {
         res.status(400).json({ error: "Invalid login Details" })
@@ -95,7 +101,7 @@ exports.changePasswordUser = async (req, res) => {
 exports.getUserInfo = async (req, res) => {
     try {
         const t = await db.sequelize.transaction();
-        let user = await User.findAll({transaction:t});
+        let user = await User.findAll({ transaction: t });
         res.status(200).json({ data: user });
         t.commit()
     } catch (err) {
