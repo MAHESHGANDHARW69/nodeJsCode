@@ -15,7 +15,7 @@ app.use('/api/users',userRouter);
 app.set('view engine','ejs'); //emplate engine ejs
 app.set('views','./views');
 
-app.get('/frist_template',function(req,res){
+app.get('/index',function(req,res){
     res.render('index');
 })
 
