@@ -8,5 +8,6 @@ userRouter.post("/changePassword",auth,users.changePasswordUser);
 userRouter.get("/usersInfo",users.getUserInfo);
 userRouter.put("/updateProfile",auth,users.updateProfileUsers);
 userRouter.delete("/deleteUser",auth,users.deleteUserDetails);
-userRouter.post("/renewAccessToken",users.renewAccessToken)
+userRouter.post("/renewAccessToken",users.renewAccessToken);
+userRouter.get("/",users.indexLoginForm); //template engine ejs routing
 module.exports = userRouter;

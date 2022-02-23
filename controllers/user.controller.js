@@ -151,7 +151,7 @@ exports.deleteUserDetails = async (req, res) => {
         var userId = decoded.id
         let user = await User.destroy({ where: { id: userId } }).then((user) => {
             if (user) {
-                res.json({ msg: "User was delete successfully!" })
+                res.json({msg: "User was delete successfully!" })
             } else {
                 res.send({
                     message: `Cannot delete with id=${id}`,
@@ -181,5 +181,13 @@ exports.renewAccessToken = async (req, res) => {
         })
     } catch (err) {
 
+    }
+}
+
+exports.indexLoginForm = async (req,res)=>{  // template engine ejs
+    try{
+        res.render('index');
+    }catch(err){
+        console.log(err)
     }
 }

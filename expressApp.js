@@ -14,10 +14,10 @@ app.use('/api/users',userRouter);
 
 app.set('view engine','ejs'); //emplate engine ejs
 app.set('views','./views');
-
-app.get('/index',function(req,res){
-    res.render('index');
-})
+// app.use(express.static('public')) // we can use static file 
+// app.get('/',function(req,res){
+//     res.render('index');
+// })
 
 const PORT = process.env.PORTADD || 5000
 
