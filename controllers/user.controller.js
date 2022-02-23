@@ -75,10 +75,8 @@ exports.loginUser = async (req, res) => {
         refreshTokens.push(refresh_token);
         if (isMatch) {            
             res.status(200).json({ email: user.email, password: user.password, access_token, refresh_token, msg: "User LoggedIn!" });
-            console.log("commited Logged")
         } else {            
             res.status(404).json({ error: 'Invalid password Details' });
-            console.log("error is rolling")
         }
     } catch (err) {
         res.status(400).json({ error: "Invalid login Details" })
