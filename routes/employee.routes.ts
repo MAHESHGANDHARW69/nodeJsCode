@@ -1,6 +1,9 @@
 import express from 'express';
-const employee = require('../controllers/employee.controller');
+const { EmployeeController } = require('../controllers/employee.controller');
 const employeeRouter = express.Router();
-employeeRouter.post('/employeeRegister',employee.createEmployees);
+const employee = new EmployeeController(); // create object of class 
+employeeRouter.post('/employeeRegister', employee.createEmployees);
+employeeRouter.post('/employeeLogin', employee.loginEmployee);
+employeeRouter.post('/changePasswordEmployee', employee.changePasswordEmployee);
 
 module.exports = employeeRouter;
