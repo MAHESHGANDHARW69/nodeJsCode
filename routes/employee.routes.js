@@ -10,4 +10,5 @@ const employee = new EmployeeController(); // create object of class
 employeeRouter.post('/employeeRegister', employee.createEmployees);
 employeeRouter.post('/employeeLogin', employee.loginEmployee);
 employeeRouter.post('/changePasswordEmployee', employee.changePasswordEmployee);
+employeeRouter.put('/updateProfile', employee.updateProfileEmployee);
 module.exports = employeeRouter;

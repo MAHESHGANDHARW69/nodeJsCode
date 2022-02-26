@@ -1,39 +1,10 @@
-const db = require('../models');
+// const db = require('../models');
+import db from '../models';
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 
 const Employee = db.employees;
-
-// exports.createEmployees = async (req: any, res: any) => {
-//     try {
-//         const { first_name, last_name, email, gender, password } = req.body;
-//         const oldUser = await Employee.findOne({ where: { email } });
-//         if (oldUser) {
-//             return res.status(409).json({ msg: "User Already Exist. Please Login" });
-//         }
-//         const encryptedPassword = await bcrypt.hash(password, 8);
-//         const employee = {
-//             first_name: first_name,
-//             last_name: last_name,
-//             email: email,
-//             gender: gender,
-//             password: encryptedPassword
-//         }
-//         Employee.create(employee)
-//             .then((data:any) => {
-//                 res.status(201).json({ data: data, msg: "User Registered successfully!" })
-//             })
-//             .catch((err:any) => {
-//                 res.status(500).send({
-//                     message:
-//                         err.message || "Internal Server Error,"
-//                 });
-//             })
-//     } catch (err) {
-
-//     }
-// }
 
 export class EmployeeController {
     // save employee data in database by api
@@ -72,7 +43,7 @@ export class EmployeeController {
             const { email, password } = req.body;
             const user = await Employee.findOne({ where: { email } });
             const isMatch = await bcrypt.compare(password, user.password);
-            console.log('=============>',isMatch)
+            console.log('=============>', isMatch)
             let data = {
                 id: user.id,
                 email: user.email
@@ -80,7 +51,7 @@ export class EmployeeController {
             const access_token = await jwt.sign(data, process.env.JWT_SECRET, { expiresIn: "8h" })
             if (isMatch) {
                 res.status(200).json({ email: user.email, password: user.password, access_token, msg: "User LoggedIn!" });
-                console.log("user logged in")                
+                console.log("user logged in")
             } else {
                 res.status(404).json({ error: 'Invalid password Details' });
             }
@@ -99,13 +70,40 @@ export class EmployeeController {
             console.log(userId)
             const salt = await bcrypt.genSalt(8);
             const password = await bcrypt.hash(req.body.password, salt);
-            const id = await Employee.findOne({ where: { id: userId } }).then((user:any) => {
-                user.update({ password: password }).then((user:any) => {
+            const id = await Employee.findOne({ where: { id: userId } }).then((user: any) => {
+                user.update({ password: password }).then((user: any) => {
                     res.status(200).json({ data: user, msg: "Changed password successfully" })
                 })
             });
         } catch (err) {
             res.status(404).send("Unauthorized access")
+        }
+    }
+    //update profile but username and email can not update
+    updateProfileEmployee = async (req: any, res: any) => {
+        try {
+            const { first_name, last_name, email, gender, password } = req.body;
+            let token = req.headers.authorization;
+            let onlyToken = token.split(' ')[1]
+            var decoded = jwt.verify(onlyToken, process.env.JWT_SECRET);
+            var userId = decoded.id
+            const encryptedPassword = await bcrypt.hash(password, 8);
+            if (!email) {
+                let user = await Employee.findOne({ where: { id: userId } }).then((user: any) => {
+                    user.update({
+                        first_name: first_name,
+                        last_name: last_name,
+                        gender: gender,
+                        password: encryptedPassword
+                    }).then((user: any) => {
+                        res.status(200).json({ data: user, msg: "Profile Updated successfully" })
+                    })
+                })
+            }else{
+                res.status(409).json({msg: "Username and email can't update!"})
+            }
+        } catch (err) {
+            res.status(404).send("Unauthorized access.")
         }
     }
 }

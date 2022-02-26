@@ -8,41 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmployeeController = void 0;
-const db = require('../models');
+// const db = require('../models');
+const models_1 = __importDefault(require("../models"));
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
-const Employee = db.employees;
-// exports.createEmployees = async (req: any, res: any) => {
-//     try {
-//         const { first_name, last_name, email, gender, password } = req.body;
-//         const oldUser = await Employee.findOne({ where: { email } });
-//         if (oldUser) {
-//             return res.status(409).json({ msg: "User Already Exist. Please Login" });
-//         }
-//         const encryptedPassword = await bcrypt.hash(password, 8);
-//         const employee = {
-//             first_name: first_name,
-//             last_name: last_name,
-//             email: email,
-//             gender: gender,
-//             password: encryptedPassword
-//         }
-//         Employee.create(employee)
-//             .then((data:any) => {
-//                 res.status(201).json({ data: data, msg: "User Registered successfully!" })
-//             })
-//             .catch((err:any) => {
-//                 res.status(500).send({
-//                     message:
-//                         err.message || "Internal Server Error,"
-//                 });
-//             })
-//     } catch (err) {
-//     }
-// }
+const Employee = models_1.default.employees;
 class EmployeeController {
     constructor() {
         // save employee data in database by api
@@ -118,6 +94,35 @@ class EmployeeController {
             }
             catch (err) {
                 res.status(404).send("Unauthorized access");
+            }
+        });
+        //update profile but username and email can not update
+        this.updateProfileEmployee = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { first_name, last_name, email, gender, password } = req.body;
+                let token = req.headers.authorization;
+                let onlyToken = token.split(' ')[1];
+                var decoded = jwt.verify(onlyToken, process.env.JWT_SECRET);
+                var userId = decoded.id;
+                const encryptedPassword = yield bcrypt.hash(password, 8);
+                if (!email) {
+                    let user = yield Employee.findOne({ where: { id: userId } }).then((user) => {
+                        user.update({
+                            first_name: first_name,
+                            last_name: last_name,
+                            gender: gender,
+                            password: encryptedPassword
+                        }).then((user) => {
+                            res.status(200).json({ data: user, msg: "Profile Updated successfully" });
+                        });
+                    });
+                }
+                else {
+                    res.status(409).json({ msg: "Username and email can't update!" });
+                }
+            }
+            catch (err) {
+                res.status(404).send("Unauthorized access.");
             }
         });
     }
