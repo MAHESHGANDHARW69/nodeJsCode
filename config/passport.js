@@ -36,7 +36,7 @@ module.exports = (passport) => {
         } catch (err) {
             console.log(err)
         }   
-        return done(null, profile);     
+        // return done(null, profile);     
     }
     ));
 
