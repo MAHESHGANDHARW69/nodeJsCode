@@ -39,7 +39,7 @@
         .module {
             position: relative;
             top: 15%;
-            height: 75%;
+            height: 80%;
             width: 450px;
             margin-left: auto;
             margin-right: auto;
@@ -139,8 +139,11 @@
         .button:hover {
             background: #80b438;
 
-        }
+        }        
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.0-2/css/all.min.css"
+        integrity="sha256-46r060N2LrChLLb5zowXQ72/iKKNiw/lAmygmHExk/o=" crossorigin="anonymous" />
 </head>
 
 <body>
@@ -152,9 +155,14 @@
                 <input type="text" name="user[email]" placeholder="Email Address" class="textbox" required />
                 <input type="password" name="user[password]" placeholder="Enter password" class="textbox" required />
                 <input type="submit" value="Submit" class="button" />
+                <a href="/google" class="btn red darken-1">
+                    <i class="fab fa-google left"></i>
+                </a>
+                <a href="/facebook" class="waves-effect waves-light btn social facebook">
+                    <i class="fa fa-facebook"></i> Sign in with facebook
+                  </a>
             </form>
-        </div>
-    </div>
+        </div>                        
+    </div>        
 </body>
-
 </html>

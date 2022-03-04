@@ -1,17 +1,23 @@
 module.exports = (sequelize, Sequelize) => {
-    const App = sequelize.define("apps", {
-      first_name: {
-        type: Sequelize.STRING
-      },
-      last_name: {
-        type: Sequelize.STRING
-      },
-      email: {
-        type: Sequelize.STRING
-      },
-      password: {
-        type: Sequelize.STRING
-      }
-    });
-    return App;
-  };
+  const User = sequelize.define("socials", {
+    AppId: {
+      type: Sequelize.STRING
+    },
+    displayName: {
+      type: Sequelize.STRING
+    },
+    lastName: {
+      type: Sequelize.STRING
+    },    
+    email: {
+      type: Sequelize.STRING
+    },
+    password: {
+      type: Sequelize.STRING
+    },
+    socialType: {
+      type: Sequelize.STRING
+    }
+  });
+  return User;
+};

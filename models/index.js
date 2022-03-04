@@ -15,5 +15,5 @@ const sequelize = new Sequelize(dbConfig.DB,dbConfig.USER,dbConfig.PASSWORD,{
 const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
-db.apps = require('./register.model.js')(sequelize,Sequelize);
+db.socials = require('./register.model.js')(sequelize,Sequelize);
 module.exports = db;

@@ -1,6 +1,6 @@
 const db = require('../models');
 const bcrypt = require('bcrypt');
-const App = db.apps;
+const App = db.socials;
 
 exports.createUser = async (req, res) => {
     try {
@@ -11,10 +11,12 @@ exports.createUser = async (req, res) => {
         }
         const encryptedPassword = await bcrypt.hash(password, 8);
         const user = {
-            first_name: firstname,
-            last_name: lastname,
+            AppId:Math.random(),
+            displayName: firstname,
+            lastName: lastname,
             email: email,
-            password: encryptedPassword
+            password: encryptedPassword,
+            socialType:'system_login'
         }
         App.create(user)
             .then(data => {
@@ -41,6 +43,7 @@ exports.userLogin = async (req, res) => {
             res.redirect('/dashboard')
         }else{
             res.redirect('/login')
+            console.log('===============>error')
         }
     } catch (err) {
         res.redirect("/login")
