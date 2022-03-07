@@ -21,7 +21,7 @@ exports.createUser = async (req, res) => {
         App.create(user)
             .then(data => {
                 res.redirect('/login')
-                console.log(data)
+                console.log("saved data")
             })
             .catch(err => {
                 res.status(500).send({
@@ -41,11 +41,13 @@ exports.userLogin = async (req, res) => {
         const isMAtch = await bcrypt.compare(password,user.password);
         if(isMAtch){
             res.redirect('/dashboard')
+            console.log('User Logged In')
         }else{
             res.redirect('/login')
-            console.log('===============>error')
+            console.log('Invalid password Details')
         }
     } catch (err) {
         res.redirect("/login")
+        console.log('Invalid login Details')
     }
 }

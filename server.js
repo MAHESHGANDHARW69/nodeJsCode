@@ -13,16 +13,15 @@ db.sequelize.sync();
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
-app.use('/',router);
-
-app.set('view engine','ejs');
-app.set('views','./views')
-
 app.use(session({
     resave: false,
     saveUninitialized: true,
     secret: 'SECRET'
 }));
+app.use('/',router);
+
+app.set('view engine','ejs');
+app.set('views','./views')
 
 app.use(passport.initialize());
 app.use(passport.session());
