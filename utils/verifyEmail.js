@@ -1,7 +1,7 @@
 let nodemailer = require("nodemailer");
 require('dotenv').config();
 
-function createEmailSender (name,email,confirmationCode){
+function createEmailSender (email,otp,confirmationCode){
     var transporter = nodemailer.createTransport({
         service:'gmail',
         auth:{
@@ -13,9 +13,9 @@ function createEmailSender (name,email,confirmationCode){
     var mailOptions = {
         from:process.env.EMAIL_ID,
         to:email,
-        subject:"please confirm your account",
+        subject:"Please Confirm Your Account",
         html: `<h1>Email Confirmation</h1>
-        <h2>Hello ${name}</h2>
+        <h2>OTP:- ${otp}</h2>
         <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
         <a href=http://localhost:${process.env.PORT}/confirm/${confirmationCode}> Click here</a>
         </div>`,       
