@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const otpGenearator = require('otp-generator');
 require('dotenv').config();
-const { createEmailSender, sendOtpVerfiy } = require('../utils/verifyOtp')
+const { sendSms, sendOtpVerfiy } = require('../utils/verifyOtp');
+const { emailVerfiyToken, emailVerfiyOtp } = require('../utils/verifyEmail');
 
 const User = db.User;
 
@@ -28,19 +29,20 @@ exports.createUser = async (req, res) => {
             .digest('hex');
 
         //OTP generate
-        const OTP = otpGenearator.generate(6, {
+        const OTP = otpGenearator.generate(4, {
             lowerCaseAlphabets: false,
             digits: true,
             upperCaseAlphabets: false,
-            specialChars: false
+            specialChars: false,
         })
-        console.log(OTP)
+        console.log('before===========>', OTP)
         // const OTP = Math.floor((Math.random()*1000000)+1);                    
         // console.log('=======>token', OTP)
         // const salt = await bcrypt.genSalt(10);
         // const otp = await bcrypt.hash(OTP,salt)        
 
         const encryptedPassword = await bcrypt.hash(password, 8);
+        const encryptedOtp = await bcrypt.hash(OTP, 8)
         const user = {
             userType: userType,
             profilePhoto: profilePhoto,
@@ -51,14 +53,16 @@ exports.createUser = async (req, res) => {
             password: encryptedPassword,
             isDeactivated: isDeactivated,
             isVarified: isVarified,
-            resetToken: Token,
+            resetToken: encryptedOtp,
         }
         console.log("======================", User)
         User.create(user)
             .then(data => {
                 res.status(201).json({ data: data, msg: "otp sent successfully" })
-                // createEmailSender(email,OTP, Token);
-                sendOtpVerfiy(phone);
+                // emailVerfiyToken(email, Token);
+                // emailVerfiyOtp(email, Token)
+                // sendOtpVerfiy(phone);
+                sendSms(phone, OTP)
             })
             .catch(err => {
                 res.status(500).send({
@@ -73,20 +77,35 @@ exports.createUser = async (req, res) => {
 
 exports.loginUser = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+
+        const { email, password } = req.body.user;
         const user = await User.findOne({ where: { email } });
         if (!user) return next(new Error('Email does not exist'));
         const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch && user.userType == "admin") {
+        const OTP = otpGenearator.generate(4, {
+            lowerCaseAlphabets: false,
+            digits: true,
+            upperCaseAlphabets: false,
+            specialChars: false,
+        })
+        const encryptedOtp = await bcrypt.hash(OTP, 8)
+        const sess = req.session;
+        if (isMatch) {
+            sess.email = user.email;
+            sess.save();
+            console.log('session storage======>', sess)
             User.findByPk(user.id).then((user) => {
-                User.update({ isDeactivated: false }, { where: { id: user.id } })
+                User.update({ resetToken: encryptedOtp }, { where: { id: user.id } });
             })
-            res.status(200).json({ email: user.email, password: user.password, accessToken, resetToken, msg: "User LoggedIn!" });
+            sendSms(user.phone, OTP)
+            // res.status(200).json({ email: email, msg: "User LoggedIn!" });
+            res.redirect('/verify-otp')
         } else {
-            res.status(404).json({ error: 'Invalid password Details' });
+            // res.status(404).json({ error: 'Invalid password Details' });
+            res.redirect('/loginUser')
         }
     } catch (err) {
-        res.status(400).json({ error: "Invalid login Details" })
+        res.status(400).json({ error: err })
     }
 }
 // exports.loginSeller = async (req, res, next) => {
@@ -127,7 +146,7 @@ exports.viewUsers = async (req, res) => {
 //         const user = await User.findOne({ where: { email: decodedEmail } })
 //         if (user) {
 //             User.findByPk(user.id).then((user) => {
-//                 User.update({ isVarified: true }, { where: { id: user.id } })
+//                 User.update({ isVarified: true,resetToken: null }, { where: { id: user.id } })
 //                 console.log('You have been verified successfully!!')
 //                 res.send("You have been verified")
 //             })
@@ -147,7 +166,7 @@ exports.userVerify = async (req, res) => {
         console.log(user)
         if (user) {
             User.findByPk(user.id).then((user) => {
-                User.update({ isVarified: true }, { where: { id: user.id } })
+                User.update({ isVarified: true, resetToken: null }, { where: { id: user.id } })
                 console.log('You have been verified successfully!!')
                 res.status(200).json({ success: "You have been verified" })
             })
@@ -159,29 +178,57 @@ exports.userVerify = async (req, res) => {
     }
 }
 
-//verify Otp using phone number
+//verify Otp using phone number in twilio
+
+// exports.verifyOtp = async (req, res) => {
+//     try {
+//         const { phone, otp } = req.body;
+//         const user = await User.findOne({ where: { phone: phone } });
+//         const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+//         const check = await client.verify.services(process.env.VERIFY_SERVICE_SID)
+//             .verificationChecks
+//             .create({ to: `+91${phone}`, code: otp })
+//         if (user) {
+//             User.findByPk(user.id).then((user) => {
+//                 User.update({ isVarified: true,resetToken: null }, { where: { id: user.id } })
+//                 console.log('You have been verified successfully!!')
+//                 res.status(200).send(check);
+//             })
+//                 .catch(e => {
+//                     console.log(e)
+//                     res.status(500).send(e);
+//                 });
+
+//         }
+//     } catch (err) {
+//         res.json({ err: err })
+//     }
+// }
 
 exports.verifyOtp = async (req, res) => {
     try {
-        const { phone, otp } = req.body;
+        const { phone, otp } = req.body.user;
         const user = await User.findOne({ where: { phone: phone } });
-        const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-        const check = await client.verify.services(process.env.VERIFY_SERVICE_SID)
-            .verificationChecks
-            .create({ to: `+91${phone}`, code: otp })
-            if(user){
-                User.findByPk(user.id).then((user) => {
-                    User.update({ isVarified: true }, { where: { id: user.id } })
-                    console.log('You have been verified successfully!!')
-                    res.status(200).send(check);
-                })
+        const isMatch = await bcrypt.compare(otp, user.resetToken);
+        console.log(isMatch)
+        const msg = "You have been verified successfully!!"
+        if (isMatch) {
+            req.session.isDeactivated = false;
+            User.findByPk(user.id).then((user) => {
+                User.update({ isDeactivated: false, isVarified: true, resetToken: null }, { where: { id: user.id } })
+                console.log('You have been verified successfully!!')
+                // res.status(200).json({ isVarified: isMatch, msg: msg });
+                res.redirect('/admin')
+                sendSms(phone, msg)
+            })
                 .catch(e => {
                     console.log(e)
                     res.status(500).send(e);
                 });
-
-            }       
+        } else {
+            res.status(500).send("otp is not matched");
+        }
     } catch (err) {
-        res.json({ err: err })
+        res.json({ err: "otp expired" })
     }
 }
