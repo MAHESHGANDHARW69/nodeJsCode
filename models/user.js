@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
     isDeactivated: DataTypes.BOOLEAN,
     updateAt: DataTypes.DATE,
     resetToken: DataTypes.STRING,
-    isVarified: DataTypes.BOOLEAN
+    isVarified: DataTypes.BOOLEAN,
+    isApproved:DataTypes.BOOLEAN,
   }, {
     sequelize,
     modelName: 'User',

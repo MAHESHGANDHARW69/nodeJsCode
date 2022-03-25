@@ -49,4 +49,25 @@ function emailVerfiyOtp(email, otp) {
     })
 }
 
-module.exports = { emailVerfiyOtp, emailVerfiyToken }
+function approvedUserEmail (email){
+    var transporter = nodemailer.createTransport({
+        service:'gmail',
+        auth:{
+            user:'mahesh.thoughtwin@gmail.com',
+            pass:'mahesh12345'
+        }
+    });
+    
+    var mailOptions = {
+        from:'mahesh.thoughtwin@gmail.com',
+        to:email,
+        subject:'Nodemailer Email Test Module',
+        text:'You have been Approved Successfully!please login now!'        
+    };
+    transporter.sendMail(mailOptions,(error,info)=>{
+        console.log('You have been Registered Successfully' + info.response);
+        res.send('You have been Approved Successfully')
+    })
+}
+
+module.exports = { emailVerfiyOtp, emailVerfiyToken,approvedUserEmail }

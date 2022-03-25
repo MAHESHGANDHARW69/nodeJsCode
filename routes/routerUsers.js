@@ -21,17 +21,22 @@ router.get('/verify-otp', (req, res) => {
         res.redirect('/loginUser')
     }
 })
-router.get('/admin',(req,res)=>{
-    if(req.session.isDeactivated == false){
-        res.render('admin')
-    }else{
-        res.redirect('/loginUser')
-    }
+router.get('/admin',async(req,res)=>{
+    const users = await user.viewSeller();
+    // if(req.session.isDeactivated == false){        
+        res.render('index',{users})
+    // }else{
+        // res.redirect('/loginUser')
+    // }
     
 })
-router.get('/viewUser', user.viewUsers);
+router.get('/logout',(req,res)=>{    
+    req.session.destroy();
+    res.redirect('/loginUser')
+})
+// router.get('/view-seller', user.viewSeller);
 router.get('/confirm/:confirmationCode', user.userVerify);
 
-
+router.post('/userSellerApproved',user.approveSeller);
 
 module.exports = router;

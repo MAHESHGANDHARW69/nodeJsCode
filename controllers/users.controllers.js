@@ -1,11 +1,12 @@
 const db = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+let nodemailer = require("nodemailer");
 const crypto = require('crypto');
 const otpGenearator = require('otp-generator');
 require('dotenv').config();
 const { sendSms, sendOtpVerfiy } = require('../utils/verifyOtp');
-const { emailVerfiyToken, emailVerfiyOtp } = require('../utils/verifyEmail');
+const { emailVerfiyToken, emailVerfiyOtp, approvedUserEmail } = require('../utils/verifyEmail');
 
 const User = db.User;
 
@@ -128,15 +129,6 @@ exports.loginUser = async (req, res, next) => {
 //     }
 // }
 
-exports.viewUsers = async (req, res) => {
-    try {
-        let user = await User.findAll({ where: { userType: 'seller' } });
-        console.log(user)
-        res.status(300).json({ data: user })
-    } catch (err) {
-        res.send(err)
-    }
-}
 
 //user verification using email sending by jwt token
 // exports.userVerify = async (req, res) => {
@@ -230,5 +222,28 @@ exports.verifyOtp = async (req, res) => {
         }
     } catch (err) {
         res.json({ err: "otp expired" })
+    }
+}
+
+exports.viewSeller = async (req, res) => {
+    try {
+        let userInfo = await User.findAll({ where: { userType: 'seller' } });
+        return userInfo;
+    } catch (err) {
+        res.send(err)
+    }
+}
+
+exports.approveSeller = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email: email } });
+        User.findByPk(user.id).then((user) => {
+            User.update({ isApproved:true }, { where: { id: user.id } })            
+        })
+        let result =  await approvedUserEmail(email)
+        res.status(201).send(result)
+    } catch (err) {
+        console.log(err)
     }
 }
